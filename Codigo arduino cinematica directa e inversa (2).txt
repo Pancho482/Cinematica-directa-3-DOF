@@ -1,0 +1,316 @@
+// Codigo arduino cinematica directa e inversa final 3 grados de libertad
+#include <Servo.h>
+#include <math.h>
+
+Servo servo1;
+Servo servo2;
+Servo servo3;
+
+float operando1 = 0;
+float operando2 = 0;
+float operando3 = 0;
+bool ingresandoOperando2 = false;
+bool ingresandoOperando3 = false;
+bool operacionCompletada = false;
+String numero = "";
+
+const int paso = 10; // Paso en grados
+
+void setup() {
+  Serial.begin(9600);
+
+  servo1.attach(10);
+  servo2.attach(11);
+  servo3.attach(12);
+
+  servo1.write(0);
+  servo2.write(0);
+  servo3.write(0);
+}
+
+void loop() {
+  Serial.println("Escribe 1 para cinematica directa, 2 para cinematica inversa, o 3 para la rutina");
+
+  while (!Serial.available()) {
+    // Espera hasta que haya datos en el puerto serial
+  }
+
+  char command = Serial.read();
+  Serial.println(command);
+
+  switch (command) {
+    case '1':
+      ejecutarCodigo1();
+      delay(200);
+      break;
+
+    case '2':
+      ejecutarCodigo2();
+      delay(200);
+      break;
+
+    case '3':
+      rutinaServomotores();
+      delay(200);
+      break;
+
+    default:
+      Serial.println("Comando no reconocido. Ingrese 1, 2, o 3.");
+      delay(200);
+      break;
+  }
+}
+
+void rutinaServomotores() {
+  // Código para la rutina de servomotores
+  Serial.println("Ejecutando rutina de servomotores");
+  servo1.write(0);
+  servo2.write(0);
+  servo3.write(0);
+  delay(1000);
+  // Aquí colocas la lógica para mover los servomotores según la rutina deseada
+  servo1.write(135);
+  servo2.write(15);
+  servo3.write(30);
+  delay(500);
+  Serial.println(" ");
+  Serial.println("**********************************************");
+  Serial.println(" ");
+}
+
+void ejecutarCodigo1() {
+  // Código del primer programa
+  Serial.println("Cinematica directa");
+  float theta1, theta2, theta3;
+  float valor1, valor2, valor3;
+  float d1 = 2;
+  float a2 = 10.5;
+  float a3 = 14.5;
+  delay(500);
+  Serial.println("Ingrese los angulos del robot");  
+  Serial.print("Theta1: ");
+  valor1 = esperaEntradaFloat();
+  float  operando1 = valor1;
+  Serial.println(valor1);
+  delay(200);
+
+  Serial.print("Theta2: ");
+  valor2 = esperaEntradaFloat();
+  float  operando2 = valor2;
+  Serial.println(valor2);
+  delay(200);
+
+  Serial.print("Theta3: ");
+  valor3 = esperaEntradaFloat();
+  float  operando3 = valor3;
+  Serial.println(valor3);
+  delay(200);
+
+     theta1 = operando1 * 0.01745;
+     theta2 = operando2 * 0.01745;
+     theta3 = operando3 * 0.01745;
+      
+
+  // Realizar cálculos cinemáticos y mostrar resultados en el monitor serial
+      float resultado =   0.5*a2*cos(theta1 - 1.0*theta2) + 0.5*a2*cos(theta1 + theta2) + 0.5*a3*cos(theta2 - 1.0*theta1 + theta3) + 0.5*a3*cos(theta1 + theta2 + theta3);
+      float resultado1 =  0.5*a2*sin(theta1 - 1.0*theta2) + 0.5*a2*sin(theta1 + theta2) - 0.5*a3*sin(theta2 - 1.0*theta1 + theta3) + 0.5*a3*sin(theta1 + theta2 + theta3);
+      float resultado2 = d1 + a3*sin(theta2 + theta3) + a2*sin(theta2);
+      float resultado3 = 0.5*cos(theta1 + theta2 + theta3) + 0.5*cos(theta2 - 1.0*theta1 + theta3);//listo
+      float resultado4 = 0.5*sin(theta1 + theta2 + theta3) - 0.5*sin(theta2 - 1.0*theta1 + theta3);//listo
+      float resultado5 = sin(theta2 + theta3);//listo
+      float resultado6 = -0.5*sin(theta1 + theta2 + theta3) - 0.5*sin(theta2 - 1.0*theta1 + theta3);//listo
+      float resultado7 =   0.5*cos(theta1 + theta2 + theta3) - 0.5*cos(theta2 - 1.0*theta1 + theta3);//listo
+      float resultado8 = cos(theta2 + theta3);
+      float resultado9 = sin(theta1);
+      float resultado10 = -1.0*cos(theta1);
+      float resultado11 = 0;
+
+  Serial.println("Resultados:");
+  Serial.print("VecX: (");
+  Serial.print(resultado3);
+  Serial.print(",");
+  Serial.print(resultado4);
+  Serial.print(",");
+  Serial.print(resultado5);
+  Serial.println(")");
+
+  Serial.print("VecY: (");
+  Serial.print(resultado6);
+  Serial.print(",");
+  Serial.print(resultado7);
+  Serial.print(",");
+  Serial.print(resultado8);
+  Serial.println(")");
+
+  Serial.print("VecZ: (");
+  Serial.print(resultado9);
+  Serial.print(",");
+  Serial.print(resultado10);
+  Serial.print(",");
+  Serial.print(resultado11);
+  Serial.println(")");
+
+  Serial.print("Posi: (");
+  Serial.print(resultado);
+  Serial.print(",");
+  Serial.print(resultado1);
+  Serial.print(",");
+  Serial.print(resultado2);
+  Serial.println(")");
+
+  Serial.print("servo1=");
+  Serial.println(operando1);
+  Serial.print("servo2=");
+  Serial.println(operando2);
+  Serial.print("servo3=");
+  Serial.println(operando3);
+
+
+      if (resultado1 > -6 && operando2 < 180 && operando3 < 180 || operando1 < 180) {
+        int step1 = operando1 - servo1.read();
+        int step2 = operando2 - servo2.read();
+        int step3 = operando3 - servo3.read();
+        
+        for (int i = 0; i <= abs(step1); i+=paso) {
+          servo1.write(servo1.read() + (step1 > 0 ? paso : -paso));
+          delay(200);
+        }
+        servo1.write(operando1);
+        for (int i = 0; i <= abs(step2); i+=paso) {
+          servo2.write(servo2.read() + (step2 > 0 ? paso : -paso));
+          delay(100);
+        }
+        servo2.write(operando2);
+        for (int i = 0; i <= abs(step3); i+=paso) {
+          servo3.write(servo3.read() + (step3 > 0 ? paso : -paso));
+          delay(100);
+        }
+        servo3.write(operando3);
+        operacionCompletada = true;
+      }
+  
+  delay(500);
+  Serial.println(" ");
+  Serial.println("**********************************************");
+  Serial.println(" ");
+}
+
+void ejecutarCodigo2() {
+  // Código del segundo programa
+  Serial.println("Cinematica Inversa");
+ delay(500);
+float Px, Py, Pz; // Agrega las variables Px, Py, y Pz y asegúrate de asignar valores a estas variables.
+  float valor1, valor2, valor3;
+  float d1 = 2;
+  float a2 = 10.5;
+  float a3 = 14.5;
+
+  Serial.println("Ingrese la posicion del robot");  
+  Serial.print("Px: ");
+  valor1 = esperaEntradaFloat();
+  Px = valor1;
+  Serial.println(valor1);
+  delay(200);
+
+  Serial.print("Py: ");
+  valor2 = esperaEntradaFloat();
+  Py = valor2;
+  Serial.println(valor2);
+  delay(200);
+
+  Serial.print("Pz: ");
+  valor3 = esperaEntradaFloat();
+  Pz = valor3;
+  Serial.println(valor3);
+  delay(200);
+
+  float valor1a = atan2(Py, Px); //Esta correcto
+  float valor2aa = (pow(Px, 2) + pow(Py, 2) + pow(Pz - d1, 2) - pow(a2, 2) - pow(a3, 2)) / (2*a2*a3); //Esta correcto
+  float valor2aaa = sqrt ((1-pow((valor2aa), 2))); //Esta correcto
+  float valor2aaaa = valor2aaa / valor2aa;//Correcto
+  float valor5a = asin((2 * Pz / 29) - (4.0 / 29));
+  float valor3aa = sqrt(pow(Px, 2) + pow(Py, 2)); //Correcto
+  float valor3aaa = (atan2((Pz - d1), valor3aa))*(180/3.1415926454); //Correcto
+  float valor3a = atan2((Pz - d1), valor3aa) - atan2((a3*sin(valor5a*(180/3.1415926454))), (a2 + a3*cos(valor5a*(180/3.1415926454)))); //Correcto
+
+
+  Serial.print("Q1: ");
+  Serial.println(valor1a*(180/3.1415926454)); //Esta correcto
+  Serial.print("Q2: ");
+  Serial.println(0); 
+  Serial.print("Q3: ");
+  Serial.println(valor5a*(180/3.1415926454)); //Correcto
+  
+
+  servo1.write(valor1a*(180/3.1415926454));
+  servo2.write(0);
+  servo3.write(valor5a*(180/3.1415926454));
+
+  delay(500);
+  Serial.println(" ");
+  Serial.println("**********************************************");
+  Serial.println(" ");
+}
+
+float esperaEntradaFloat() {
+  char buffer[10];
+  int indice = 0;
+  bool numeroIngresado = false;
+
+  while (true) {
+    while (Serial.available() > 0) {
+      char caracter = Serial.read();
+
+      if (caracter == '\n' || caracter == '\r') {
+        if (numeroIngresado) {
+          buffer[indice] = '\0';
+          return atof(buffer); // Utiliza atof() para convertir a flotante
+        }
+      } else {
+        buffer[indice++] = caracter;
+        numeroIngresado = true;
+
+        if (indice >= sizeof(buffer)) {
+          indice = sizeof(buffer) - 1;
+        }
+      }
+    }
+    delay(10);
+  }
+}
+
+void reiniciarPrograma() {
+  operando1 = 0;
+  operando2 = 0;
+  operando3 = 0;
+  ingresandoOperando2 = false;
+  ingresandoOperando3 = false;
+  operacionCompletada = false;
+  numero = "";
+ 
+  int currentPos1 = servo1.read();
+  int currentPos2 = servo2.read();
+  int currentPos3 = servo3.read();
+
+  // Mover servo1 a 0 grados en pasos de 10 grados
+  while (currentPos1 > 0) {
+    servo1.write(currentPos1 - 10);
+    delay(100);
+    currentPos1 -= 10;
+  }
+  servo1.write(0);
+  // Mover servo2 a 0 grados en pasos de 10 grados
+  while (currentPos2 > 0) {
+    servo2.write(currentPos2 - 10);
+    delay(100);
+    currentPos2 -= 10;
+  }
+  servo2.write(0);
+  // Mover servo3 a 0 grados en pasos de 10 grados
+  while (currentPos3 > 0) {
+    servo3.write(currentPos3 - 10);
+    delay(100);
+    currentPos3 -= 10;
+  }
+  servo3.write(0);
+}
