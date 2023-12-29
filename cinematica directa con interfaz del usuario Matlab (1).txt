@@ -1,0 +1,79 @@
+%Codigo cinematica directa 3 grados de libertad con interfaz de usuario 
+% Crear los eslabones del robot
+L1 = Revolute('d', 2, 'a', 0, 'alpha', pi/2);
+L2 = Revolute('d', 0, 'a', 10.5, 'alpha', 0);
+L3 = Revolute('d', 0, 'a', 14.5, 'alpha', 0);
+
+% Crear el robot serial
+R = SerialLink([L1, L2, L3]);
+
+while true
+    % Permitir al usuario ingresar valores para theta1, theta2 y theta3
+    theta1 = input('Ingrese el valor de theta1 en radianes: ');
+    theta2 = input('Ingrese el valor de theta2 en radianes: ');
+    theta3 = input('Ingrese el valor de theta3 en radianes: ');
+
+    % Calcular la cinemática directa para obtener la matriz de transformación homogénea
+    T = R.fkine([theta1, theta2, theta3]);
+
+    % Mostrar la matriz de transformación homogénea
+    disp('D-H Matlab:');
+    disp(T);
+
+    % Visualizar el robot en la configuración dada por [theta1, theta2, theta3]
+    R.plot([theta1, theta2, theta3]);
+
+    % Mostrar matrices DH
+    syms d1 a2 a3;
+    d1 = 2;
+    a2 = 10.5;
+    a3 = 14.5;
+
+    % Matriz de transformación homogénea para la articulación 1 (A01)
+    HRZd = vpa([1, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, d1; 0, 0, 0, 1]);
+    HRZa = vpa([1, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    HRZalfa = vpa([1, 0, 0, 0; 0, cos(pi/2), -sin(pi/2), 0; 0, sin(pi/2), cos(pi/2), 0; 0, 0, 0, 1]);
+    HRZtheta = vpa([cos(theta1), -sin(theta1), 0, 0; sin(theta1), cos(theta1), 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    A01 = HRZtheta * HRZd * HRZa * HRZalfa;
+
+    % Simplificar y mostrar solo 4 decimales
+    disp('Matriz A01:');
+    disp(vpa(A01, 4));
+
+    % Matriz de transformación homogénea para la articulación 2 (A12)
+    HRZd2 = vpa([1, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    HRZa2 = vpa([1, 0, 0, a2; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    HRZalfa2 = vpa([1, 0, 0, 0; 0, cos(0), -sin(0), 0; 0, sin(0), cos(0), 0; 0, 0, 0, 1]);
+    HRZtheta2 = vpa([cos(theta2), -sin(theta2), 0, 0; sin(theta2), cos(theta2), 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    A12 = HRZtheta2 * HRZd2 * HRZa2 * HRZalfa2;
+
+    % Simplificar y mostrar solo 4 decimales
+    disp('Matriz A12:');
+    disp(vpa(A12, 4));
+
+    % Matriz de transformación homogénea para la articulación 3 (A23)
+    HRZd3 = vpa([1, 0, 0, 0; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    HRZa3 = vpa([1, 0, 0, a3; 0, 1, 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    HRZalfa3 = vpa([1, 0, 0, 0; 0, cos(0), -sin(0), 0; 0, sin(0), cos(0), 0; 0, 0, 0, 1]);
+    HRZtheta3 = vpa([cos(theta3), -sin(theta3), 0, 0; sin(theta3), cos(theta3), 0, 0; 0, 0, 1, 0; 0, 0, 0, 1]);
+    A23 = HRZtheta3 * HRZd3 * HRZa3 * HRZalfa3;
+
+    % Simplificar y mostrar con 4 decimales
+    disp('Matriz A23:');
+    disp(vpa(A23, 4));
+
+    % Calcula y muestra la matriz DH
+    DH = simplify(A01 * A12 * A23);
+
+    % Muestra el resultado con 4 decimales
+    disp('D-H haciendo la multiplicación de matrices:');
+    disp(vpa(DH, 4));
+
+    % Preguntar al usuario si desea continuar o finalizar
+    respuesta = input('Presione "f" para finalizar, o cualquier otra tecla para continuar: ', 's');
+
+    % Si el usuario ingresa 'f', termina el bucle
+    if lower(respuesta) == 'f'
+        break;
+    end
+end
